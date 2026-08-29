@@ -1,11 +1,11 @@
-name: Build OpenWrt for WR740N v6
+name: Build OpenWrt 18.06 for WR740N v6
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libncurses5-dev gawk git unzip libssl-dev python3-distutils rsync wget
+          sudo apt-get install -y build-essential libncurses5-dev gawk git unzip libssl-dev wget rsync python2 python2-dev || true
 
       - name: Download Image Builder
         run: |
@@ -33,7 +33,7 @@ jobs:
           cd openwrt-imagebuilder-*
 
           make image PROFILE="tl-wr740n-v6" \
-            PACKAGES="kmod-ath9k wpa-supplicant wireless-tools -luci -luci-base -odhcp6c -kmod-ipv6 -firewall6 -kmod-usb-core -kmod-usb2 -kmod-fs-ext4 -kmod-fs-fat"
+            PACKAGES="kmod-ath9k wpa-supplicant wireless-tools -luci -luci-base -odhcp6c -kmod-ipv6 -firewall6 -kmod-usb-core -kmod-usb2"
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
