@@ -1,0 +1,44 @@
+name: Build OpenWrt for WR740N v6
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libncurses5-dev gawk git unzip libssl-dev python3-distutils rsync wget
+
+      - name: Download Image Builder
+        run: |
+          # رابط الصورة الرسمية لإصدار مستقر لمعالج ar71xx الخاص براوترك
+          wget https://downloads.openwrt.org/releases/18.06.9/targets/ar71xx/generic/openwrt-imagebuilder-18.06.9-ar71xx-generic.Linux-x86_64.tar.xz
+          tar -xf openwrt-imagebuilder-18.06.9-ar71xx-generic.Linux-x86_64.tar.xz
+          cd openwrt-imagebuilder-*
+
+          # عملية البناء وحذف الزوائد لتوفير أقصى مساحة ممكنة (أزلنا الـ luci، والـ ipv6، والـ usb)
+          make image PROFILE="tl-wr740n-v6" \
+            PACKAGES="kmod-ath9k wpa-supplicant wireless-tools -luci -luci-base -odhcp6c -kmod-ipv6 -firewall6 -kmod-usb-core -kmod-usb2 -kmod-fs-ext4 -kmod-fs-fat"
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v3
+        with:
+          name: openwrt-wr740n-v6-custom
+          path: openwrt-imagebuilder-*/bin/targets/ar71xx/generic/
