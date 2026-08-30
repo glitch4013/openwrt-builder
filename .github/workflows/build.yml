@@ -1,102 +1,36 @@
-name: Build OpenWrt Firmware - TL-WR740N v6
+name: Build Micro OpenWrt 4MB
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - 'build.yml'
-      - '.github/workflows/build.yml'
-
-env:
-  OPENWRT_VERSION: "18.06.9"
-  TARGET: "ar71xx"
-  SUBTARGET: "tiny"
-  PROFILE: "tl-wr740n-v6"
-  
-  # حزم إضافية تُضاف، وحزم يسبقها (-) تُحذف لتوفير المساحة
-  # الاستخدام المستهدف: WISP (عميل لاسلكي + AP) + تحديد سرعة (tc) + IP ثابت بالـ MAC (dnsmasq) + DDNS + SSH فقط بدون أي واجهة
-  # تحذير DDNS: هذا البناء لا يتضمن TLS (libustream-mbedtls + ca-bundle) لأنها تستهلك ~150-200KB
-  # لذا اختر مزوّد DDNS يدعم التحديث عبر HTTP العادي (مثل No-IP أو DuckDNS)
-  PACKAGES: >-
-    kmod-ath9k wpad-mini tc kmod-sched-core ddns-scripts
-    -wpa-supplicant -wireless-tools -luci -luci-base -uhttpd -uhttpd-mod-ubus
-    -px5g-wolfssl -rpcd -rpcd-mod-rrdns -opkg -logd -ppp -ppp-mod-pppoe
-    -kmod-ppp -kmod-pppoe -kmod-pppox -kmod-slhc -ip6tables -kmod-ip6tables
-    -kmod-ipv6 -kmod-nf-ipt6 -kmod-nf-reject6 -kmod-nf-conntrack6 -odhcp6c
-    -odhcpd-ipv6only -6relayd -firewall6 -libip6tc -kmod-usb-core -kmod-usb2
-    -kmod-usb-ohci -kmod-usb-ehci -kmod-usb-ledtrig-usbport
-    -kmod-nf-nathelper-extra -kmod-nf-conntrack-extra -ip6tables-utils
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install build dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libncurses5-dev zlib1g-dev \
-            gawk git gettext libssl-dev xsltproc rsync wget unzip python3 file
+          sudo apt-get install -y build-essential libncurses-dev zlib1g-dev gawk git gettext libssl-dev xsltproc rsync wget unzip python3 python3-setuptools file
 
-      - name: Download OpenWrt Image Builder
+      - name: Download Image Builder
         run: |
-          IB_FILE="openwrt-imagebuilder-${OPENWRT_VERSION}-${TARGET}-${SUBTARGET}.Linux-x86_64.tar.xz"
-          IB_URL="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/${TARGET}/${SUBTARGET}/${IB_FILE}"
-          echo "Downloading: $IB_URL"
-          wget -q "$IB_URL" -O imagebuilder.tar.xz
-          if [ ! -s imagebuilder.tar.xz ]; then
-            echo "فشل تنزيل Image Builder — تحقق من الرابط أو الإصدار"
-            exit 1
-          fi
-          tar xJf imagebuilder.tar.xz
-          EXTRACTED_DIR=$(tar tJf imagebuilder.tar.xz | head -1 | cut -f1 -d"/")
-          mv "$EXTRACTED_DIR" imagebuilder
+          wget https://archive.openwrt.org/releases/19.07.10/targets/ar71xx/generic/openwrt-imagebuilder-19.07.10-ar71xx-generic.Linux-x86_64.tar.xz
+          tar -xf openwrt-imagebuilder-19.07.10-ar71xx-generic.Linux-x86_64.tar.xz
+          cd openwrt-imagebuilder-19.07.10-ar71xx-generic.Linux-x86_64
+          echo "BUILD_DIR=$(pwd)" >> $GITHUB_ENV
 
-      - name: Show available profiles (للتأكد من اسم البروفايل الصحيح)
-        working-directory: imagebuilder
+      - name: Build Micro Image
         run: |
-          make info | tee profiles_list.txt
-          echo "----------------------------------------"
-          echo "البحث عن بروفايل الراوتر المطلوب:"
-          grep -i -B1 -A2 "wr740" profiles_list.txt || echo "لم يتم العثور على البروفايل! راجع القائمة أعلاه يدوياً."
-
-      - name: Build firmware image
-        working-directory: imagebuilder
-        run: |
+          cd ${{ env.BUILD_DIR }}
           make image \
-            PROFILE="${PROFILE}" \
-            PACKAGES="${PACKAGES}" \
-            FILES="files/" \
-            2>&1 | tee build.log
+            PROFILE="tl-wr740n-v6" \
+            PACKAGES="wpad-basic -luci -uhttpd -luci-app-firewall -luci-theme-bootstrap -odhcpd-ipv6only -kmod-ipv6 -ip6tables -ppp -ppp-mod-pppoe -kmod-pppoe -kmod-ppp"
 
-      - name: Verify output files exist
-        working-directory: imagebuilder
-        run: |
-          echo "محتويات مجلد bin/targets:"
-          find bin/targets -type f -name "*${PROFILE}*"
-          if [ -z "$(find bin/targets -type f -name '*${PROFILE}*')" ]; then
-            echo "لم يتم إنتاج أي ملف فيرموير! راجع build.log"
-            exit 1
-          fi
-
-      - name: Upload firmware artifacts
+      - name: Upload Firmware Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: openwrt-${{ env.OPENWRT_VERSION }}-${{ env.PROFILE }}-firmware
-          path: |
-            imagebuilder/bin/targets/**/*factory*.bin
-            imagebuilder/bin/targets/**/*sysupgrade*.bin
-          if-no-files-found: error
-          retention-days: 30
-
-      - name: Upload build log (في حال الفشل)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: imagebuilder/build.log
-          retention-days: 7
+          name: openwrt-740n-v6-micro
+          path: ${{ env.BUILD_DIR }}/bin/targets/ar71xx/generic/*.bin
