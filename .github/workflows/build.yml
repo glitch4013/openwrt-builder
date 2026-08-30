@@ -13,7 +13,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libncurses5-dev gawk git unzip libssl-dev wget python3 zlib1g-dev file
+          sudo apt-get install -y build-essential gcc g++ libncurses5-dev gawk git unzip libssl-dev wget python2 zlib1g-dev file
+          sudo ln -sf /usr/bin/python2 /usr/bin/python
 
       - name: Download Image Builder 18.06.9 Tiny
         run: |
@@ -33,5 +34,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: openwrt-18.06-tiny-740n-v6
-          # قمنا بتحديد squashfs فقط لتجنب سحب ملف initramfs الضخم
           path: ${{ env.BUILD_DIR }}/bin/targets/ar71xx/tiny/*squashfs*.bin
