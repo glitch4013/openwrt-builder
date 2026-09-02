@@ -42,6 +42,7 @@ jobs:
           
           make image \
             PROFILE="tl-wr740n-v6" \
+            FILES="files" \
             PACKAGES="wpad-mini tc kmod-sched-core ddns-scripts \
             -opkg -uhttpd -uhttpd-mod-ubus \
             -odhcp6c -odhcpd-ipv6only -kmod-ipv6 -ip6tables \
