@@ -26,7 +26,7 @@ jobs:
       - name: Copy custom files to Image Builder
         run: |
           if [ -d "files" ]; then
-            cp -r files/* ${{ env.BUILD_DIR }}/
+            cp -av files/. ${{ env.BUILD_DIR }}/
             echo "Custom files copied successfully!"
           else
             echo "Warning: files directory not found!"
