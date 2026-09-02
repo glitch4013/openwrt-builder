@@ -25,7 +25,6 @@ jobs:
 
       - name: Copy custom files to Image Builder
         run: |
-          # التأكد من أن مجلد files موجود في المستودع ثم نسخه إلى مجلد Image Builder
           if [ -d "files" ]; then
             cp -r files/* ${{ env.BUILD_DIR }}/
             echo "Custom files copied successfully!"
@@ -41,7 +40,7 @@ jobs:
           mkdir -p staging_dir/host
           touch staging_dir/host/.prereq-build
           
-        make image \
+          make image \
             PROFILE="tl-wr740n-v6" \
             PACKAGES="wpad-mini tc kmod-sched-core ddns-scripts \
             -opkg -uhttpd -uhttpd-mod-ubus \
