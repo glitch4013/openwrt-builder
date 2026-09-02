@@ -41,13 +41,17 @@ jobs:
           mkdir -p staging_dir/host
           touch staging_dir/host/.prereq-build
           
-          make image \
+        make image \
             PROFILE="tl-wr740n-v6" \
             PACKAGES="wpad-mini tc kmod-sched-core ddns-scripts \
-            -opkg -luci -luci-base -uhttpd -uhttpd-mod-ubus \
+            -opkg -uhttpd -uhttpd-mod-ubus \
             -odhcp6c -odhcpd-ipv6only -kmod-ipv6 -ip6tables \
             -ppp -ppp-mod-pppoe -kmod-pppoe -kmod-ppp \
-            -odhcpd -logd -kmod-usb-core -kmod-usb2"
+            -odhcpd -logd -kmod-usb-core -kmod-usb2 \
+            -libiwinfo-lua -liblua -libubus-lua -libuci-lua -lua \
+            -luci -luci-app-firewall -luci-base -luci-lib-ip \
+            -luci-lib-nixio -luci-mod-admin-full -luci-proto-ipv6 \
+            -luci-proto-ppp -luci-theme-bootstrap"
 
       - name: Upload Firmware Artifact
         uses: actions/upload-artifact@v4
