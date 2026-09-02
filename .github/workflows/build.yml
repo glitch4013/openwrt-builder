@@ -23,17 +23,6 @@ jobs:
           cd openwrt-imagebuilder-18.06.9-ar71xx-tiny.Linux-x86_64
           echo "BUILD_DIR=$(pwd)" >> $GITHUB_ENV
 
-      - name: Copy custom files to Image Builder
-        run: |
-          if [ -d "files" ]; then
-            # نسخ مجلد files بالكامل ليكون داخل بيئة Image Builder
-            cp -r files ${{ env.BUILD_DIR }}/
-            echo "Custom files copied successfully!"
-            ls -la ${{ env.BUILD_DIR }}/files/etc/uci-defaults/
-          else
-            echo "Warning: files directory not found!"
-          fi
-
       - name: Build Ultra Tiny Image
         run: |
           cd ${{ env.BUILD_DIR }}
@@ -44,7 +33,6 @@ jobs:
           
           make image \
             PROFILE="tl-wr740n-v6" \
-            FILES="files" \
             PACKAGES="wpad-mini tc kmod-sched-core ddns-scripts \
             -opkg -uhttpd -uhttpd-mod-ubus \
             -odhcp6c -odhcpd-ipv6only -kmod-ipv6 -ip6tables \
