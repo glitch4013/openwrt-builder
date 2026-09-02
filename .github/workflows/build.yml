@@ -26,8 +26,10 @@ jobs:
       - name: Copy custom files to Image Builder
         run: |
           if [ -d "files" ]; then
-            cp -av files/. ${{ env.BUILD_DIR }}/
+            # نسخ مجلد files بالكامل ليكون داخل بيئة Image Builder
+            cp -r files ${{ env.BUILD_DIR }}/
             echo "Custom files copied successfully!"
+            ls -la ${{ env.BUILD_DIR }}/files/etc/uci-defaults/
           else
             echo "Warning: files directory not found!"
           fi
